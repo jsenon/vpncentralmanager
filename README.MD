@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/jsenon/vpncentralmanager.svg?style=svg)](https://circleci.com/gh/jsenon/vpncentralmanager)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jsenon/vpncentralmanager)](https://goreportcard.com/report/github.com/jsenon/vpncentralmanager)
+
 # VPN Central Manager
 
 ## Func
