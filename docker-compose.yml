@@ -10,7 +10,6 @@ services:
     image: "amazon/dynamodb-local"
     volumes:
       - ./db/:/data
-    # entrypoint: "/bin/bash"
     entrypoint: "java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -dbPath /data"
     ports:
      - "8000:8000"
