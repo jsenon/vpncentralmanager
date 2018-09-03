@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package advertise;
+option go_package = "pb";
+
+// Server: Retrieve configuration from node controller
+service Advertise {
+    rpc GetConfig (NodeConf) returns (RespNode) {}
+}
+
+// Configuration received from node controller
+message NodeConf {
+    string ippublic = 1;
+    string keypublic = 2;
+    string hostname = 3;
+
+}
+
+// IP Private and allowed range are calculated by VPN Central Manager sent to node controller
+message RespNode {
+    string ipprivate = 1;
+    string allowedrange = 2;
+    string vpnservername = 3;
+}

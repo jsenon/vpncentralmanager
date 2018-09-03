@@ -1,0 +1,19 @@
+{
+    "TableName" : "VPNCLIENT",
+    "KeySchema": [       
+        { 
+            "AttributeName": "Client", 
+            "KeyType": "HASH"
+        }
+    ],
+    "AttributeDefinitions": [
+        { 
+            "AttributeName": "Client", 
+            "AttributeType": "S" 
+        }
+    ],
+    "ProvisionedThroughput": {       
+        "ReadCapacityUnits": 1, 
+        "WriteCapacityUnits": 1
+    }
+}

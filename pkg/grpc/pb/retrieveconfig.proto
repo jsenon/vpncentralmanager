@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package retrieveconfig;
+option go_package = "pb";
+
+// Server Get all configuration
+service RetrieveConfig {
+    rpc GetAllConfig (AllConfigFileReq) returns (AllConfigFileResp) {}
+}
+
+// id could be vpn server or client config id
+// type will be choose in order to retrieve server or client configuration
+message AllConfigFileReq {
+    string id = 1;
+    string type = 2;
+}
+
+// All configuration
+// could be client or vpn server configuration
+message AllConfigFileResp {
+    repeated Item items = 1;
+}
+
+message Item {
+    string id = 1;
+    string name = 2;
+    string addressvpn = 3;
+    string addresspub = 4;
+    string publikey = 5;
+    string status = 6;
+}

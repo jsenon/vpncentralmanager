@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package newclientdemand;
+option go_package = "pb";
+
+// Server : Get new VPN Client Credential form WebPortal
+service NewClientDemand {
+    rpc GetClientDemand (ConfigFileReq) returns (AckWeb) {}
+}
+
+// Configuration message
+message ConfigFileReq {
+    string keypublic = 1;
+    string hostname = 2;
+}
+
+// Ack to webserver
+message AckWeb {
+    bool ack = 1;
+}

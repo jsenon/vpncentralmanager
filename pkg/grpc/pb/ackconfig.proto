@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ackconfig;
+option go_package = "pb";
+
+
+// Server: Receive acknoledgement from node controller if config are correctly applied
+service AckConfig {
+    rpc GetAck (State) returns (AckNode) {}
+}
+
+// Receive Status for VPN Server and the servername
+message State {
+    string status = 1;
+    string serverid = 2;
+}
+
+// Acknoledge message received from node controller
+message AckNode {
+    bool ack = 1;
+}

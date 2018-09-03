@@ -1,0 +1,19 @@
+{
+    "TableName" : "VPNSERVER",
+    "KeySchema": [       
+        { 
+            "AttributeName": "Server", 
+            "KeyType": "HASH"
+        }
+    ],
+    "AttributeDefinitions": [
+        { 
+            "AttributeName": "Server", 
+            "AttributeType": "S" 
+        }
+    ],
+    "ProvisionedThroughput": {       
+        "ReadCapacityUnits": 1, 
+        "WriteCapacityUnits": 1
+    }
+}

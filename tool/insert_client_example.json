@@ -1,0 +1,7 @@
+{
+    "Client": {"S": "Myclient"},
+    "AddressVpn": {"S": "127.0.0.1"},
+    "AddressPub": {"S": "127.0.0.1"},
+    "PublicKey": {"S": "dsfsdf098dsjlkj"},
+    "Status": {"S": "OK"}
+}

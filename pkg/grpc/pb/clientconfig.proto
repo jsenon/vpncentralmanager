@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package clientconfig;
+option go_package = "pb";
+
+// Server Retrieve new configuration file for client
+service ClientConfig {
+    rpc GetClientConfig (Request) returns (ConfigFileResp) {}
+}
+
+// Configuration message
+// Allowed with range of VPC Peered to VPN VPC has to be sent to the client
+// In order to create iptables rules
+message ConfigFileResp {
+    string keypublic = 1;
+    string allowedrange = 2;
+}
+
+// Ack to webserver
+message Request {
+    bool request = 1;
+}
+
+// Client Send configuration to VPN Server
+service SendClientConfig {
+    rpc SendClientConfig (ConfigFileResp) returns (Request) {}
+}
