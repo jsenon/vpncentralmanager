@@ -10,7 +10,9 @@
 - Receive Ack from VPN Server -> Store in DB (Available to client config)
 - Retrieve all Configuration for client or vpn server
 
-### Build
+### Run
+
+Docker image available on github `jsenon/vpncentralmanager:latest`
 
 ### Usage
 
