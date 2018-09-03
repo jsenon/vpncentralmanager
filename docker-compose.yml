@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  vpncentralmanager:
+    image: "jsenon/vpncentralmanager:latest"
+    ports:
+     - "9010:9010"
+     - "50051:50051"
+     - "7777:7777"
+  dynamoDB:
+    image: "amazon/dynamodb-local"
+    volumes:
+      - db:/data
+    entrypoint: /bin/bash
+    command: java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -dbPath /data
+    ports:
+     - "8000:8000"
+volumes:
+  db:
