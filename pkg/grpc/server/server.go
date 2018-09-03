@@ -49,7 +49,7 @@ func Serve() {
 	}
 	// Creates a new gRPC server
 	// s := grpc.NewServer()
-	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {
+	if err = view.Register(ocgrpc.DefaultServerViews...); err != nil {
 		log.Fatalf("Error registering grpc: %v", err)
 	}
 	s := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
