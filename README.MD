@@ -10,6 +10,15 @@
 - Receive Ack from VPN Server -> Store in DB (Available to client config)
 - Retrieve all Configuration for client or vpn server
 
+### Prerequisite
+
+Have DynamoDB Server.
+You can use local server for development purpose:
+
+```sh
+docker run   -v $PWD/data/:/data -p 8000:8000  --entrypoint '/bin/bash'  amazon/dynamodb-local -c 'java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -dbPath /data'
+```
+
 ### Run
 
 Docker image available on github `jsenon/vpncentralmanager:latest`
