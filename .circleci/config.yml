@@ -24,11 +24,11 @@ jobs:
 
 
       # specify any bash command here prefixed with `run: `
-      - run: 
-          name: Get dependencies
-          command: |
-            go get -u github.com/golang/dep/cmd/dep
-            dep ensure
+      # - run: 
+      #     name: Get dependencies
+      #     command: |
+      #       go get -u github.com/golang/dep/cmd/dep
+      #       dep ensure
       - run: 
           name: Test
           command: |
