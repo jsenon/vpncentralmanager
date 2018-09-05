@@ -13,6 +13,17 @@
 ### Prerequisite
 
 Have DynamoDB Server.
+
+### Launch Development Env
+
+You can launch docker-compose stack for your local dev:
+
+```sh
+docker-compose up -d
+```
+
+### Standalone DynamoDB Server
+
 You can use local server for development purpose:
 
 ```sh
@@ -24,18 +35,6 @@ docker run   -v $PWD/data/:/data -p 8000:8000  --entrypoint '/bin/bash'  amazon/
 Docker image available on github `jsenon/vpncentralmanager:latest`
 
 ### Usage
-
-Launch Server
-
-```sh
-go run main.go serve --url http://localhost:8000
-```
-
-Launch local dynamoDB Server
-
-```sh
-java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
-```
 
 Register New VPN Server
 
@@ -111,5 +110,7 @@ Client Definition
 
 - [x] Rest for well-known
 - [x] Rest for healthz
+- [x] Opencensus
+- [ ] Opencensus exporter
 - [ ] opentracing
-- [ ] prometheus
+- [x] prometheus
