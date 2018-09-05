@@ -17,10 +17,13 @@ package rest
 import (
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 
 	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/internal/restapi"
+	"go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 )
 
@@ -47,12 +50,30 @@ func ServeRest() {
 	log.Info().Msg("Listening REST on port" + port)
 
 	// API Part
-	http.HandleFunc("/healthz", restapi.Health)
-	http.HandleFunc("/.well-known", restapi.WellKnownFingerHandler)
+	// Start Muxer
+	mux := http.NewServeMux()
 
-	// http.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/healthz", restapi.Health)
+	mux.HandleFunc("/.well-known", restapi.WellKnownFingerHandler)
 
-	err := http.ListenAndServe(port, nil)
+	// Metrics REST on /restmetrics
+	mux.Handle("/restmetrics", promhttp.Handler())
+
+	// Prometheus Forwarder on /metrics
+	prefix := "vpncentralmanager"
+	promexporter, err := prometheus.NewExporter(prometheus.Options{
+		Namespace: prefix,
+	})
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Create Prometheus exporter for %s", config.Service)
+	}
+	view.RegisterExporter(promexporter)
+	mux.Handle("/metrics", promexporter)
+
+	err = http.ListenAndServe(port, mux)
 	if err != nil {
 		log.Fatal().
 			Err(err).
