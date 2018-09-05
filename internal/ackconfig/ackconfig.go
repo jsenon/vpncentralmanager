@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
+	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -60,6 +61,12 @@ type UpdateStatus struct {
 
 // GetAck receive ack from new node
 func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).GetAck")
+	defer span.End()
+	span.Annotate([]trace.Attribute{
+		trace.Int64Attribute("len", int64(len(in.Serverid))+int64(len(in.Status))),
+	}, "Data in")
+
 	fmt.Println("In Ack")
 	fmt.Println("Debug: ", in)
 	sess, err := dynamo.ConnectDynamo()
