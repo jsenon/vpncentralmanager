@@ -21,13 +21,14 @@ package postclientconfig
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"log"
 	"net"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/nextip"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
 
@@ -76,10 +77,13 @@ func PostClientConf(idclient string) { // nolint: gocyclo
 
 	// Contact VPN Server GRPC
 	var conn *grpc.ClientConn
-	fmt.Println("Fake send to VPN Server")
+	log.Debug().Msg("Fake send to VPN Server")
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't connect to VPN Server for %s", config.Service)
 	}
 	defer conn.Close() // nolint: errcheck
 	client := pb.NewSendClientConfigClient(conn)
@@ -87,24 +91,36 @@ func PostClientConf(idclient string) { // nolint: gocyclo
 	// Connection to DynamoDB
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't connect to Dynamo Server for %s", config.Service)
 	}
 	svc := dynamodb.New(sess)
 	out, err := dynamo.SearchDynamo(svc, "VPNCLIENT", idclient, "Client")
 	if err != nil {
-		log.Fatalf("Error in search: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't search on Dynamo Server for %s", config.Service)
 	}
 
 	item := Item{}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
-		log.Fatalf("Error in Unmarshal: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error unmarshal for %s", config.Service)
 	}
 
 	// Calculate VPN Client IP
 	scan, err := ScanDynamo(svc, "VPNCLIENT")
 	if err != nil {
-		log.Fatalf("Error in scan: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in scan for %s", config.Service)
 	}
 	n := net.ParseIP(minipclient)
 
@@ -122,9 +138,12 @@ func PostClientConf(idclient string) { // nolint: gocyclo
 	// Send Configuration to vpn server
 	response, err := client.SendClientConfig(context.Background(), &pb.ConfigFileResp{Keypublic: clientkeypub, Allowedrange: allowediprange})
 	if err != nil {
-		log.Fatalf("error when calling: %s", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error when calling GRPC Server for %s", config.Service)
 	}
-	fmt.Println("Response from server:", response.Request)
+	log.Info().Msgf("Response from server: %s", response.Request)
 
 	// Update in DB with key idclient
 	// Change Status
@@ -132,17 +151,26 @@ func PostClientConf(idclient string) { // nolint: gocyclo
 		Client: idclient,
 	})
 	if err != nil {
-		log.Fatalf("Error in marshal: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in marshal for %s", config.Service)
 	}
 	update, err := dynamodbattribute.MarshalMap(UpdateIPVPN{
 		AddressVpn: ippriv,
 	})
 	if err != nil {
-		log.Fatalf("Error in marshal: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in marshal for %s", config.Service)
 	}
 	err = dynamo.UpdateipvpnDynamo(svc, "VPNCLIENT", key, update)
 	if err != nil {
-		log.Fatalf("Issue update status: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Issue update status for %s", config.Service)
 	}
 
 }
@@ -156,13 +184,19 @@ func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {
-			panic(fmt.Sprintf("failed to unmarshal Dynamodb Scan Items, %v", err))
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
 		}
 		records = append(records, recs...)
 		return true // keep paging
 	})
 	if err != nil {
-		log.Fatalf("Error in scan: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in scan for %s", config.Service)
 	}
 	return records, err
 }

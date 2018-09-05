@@ -21,13 +21,14 @@ package advertise
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"log"
 	"net"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/nextip"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/randomstring"
 
@@ -58,25 +59,31 @@ const maxipserver = "10.200.207.254"
 func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, error) {
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatalf("Error in connect: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't connect to Dynamo Server for %s", config.Service)
 	}
 	svc := dynamodb.New(sess)
 
-	fmt.Println("Receive advertise from VPN Server: ", in.Hostname)
+	log.Info().Msgf("Receive advertise from VPN Server: %s", in.Hostname)
 
 	// Check next available ip for new VPN Server
 	scan, err := ScanDynamo(svc, "VPNSERVER")
 	if err != nil {
-		log.Fatalf("Error in scan: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in Scan on Dynamo Server for %s", config.Service)
 	}
 	n := net.ParseIP(minipserver)
 
 	for _, res := range scan {
 		if bytes.Compare(net.ParseIP(res.AddressVpn), n) > 0 && bytes.Compare(net.ParseIP(res.AddressVpn), net.ParseIP(maxipserver)) < 0 {
-			fmt.Println("biggest")
+			log.Debug().Msg("biggest")
 			n = net.ParseIP(res.AddressVpn)
 		} else {
-			fmt.Println("Error IP VPN Server")
+			log.Debug().Msg("Error IP VPN Server")
 		}
 	}
 
@@ -98,7 +105,10 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	}
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatalf("Error in marshall: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in marshal for %s", config.Service)
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -106,12 +116,15 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Fatalf("Error in put item: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in put item for %s", config.Service)
 	}
-	fmt.Println("Successfully added new server to VPNSERVER table")
+	log.Info().Msg("Successfully added new server to VPNSERVER table")
 
 	// Debug
-	fmt.Println("Item:", item)
+	log.Info().Msgf("Item: %s", item)
 
 	// Return info to vpn server
 	return &pb.RespNode{Ipprivate: ippriv, Allowedrange: rangeip, Vpnservername: idserver}, nil
@@ -126,13 +139,19 @@ func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {
-			panic(fmt.Sprintf("failed to unmarshal Dynamodb Scan Items, %v", err))
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("Failed to unmarshal Dynamodb Scan Items for %s", config.Service)
 		}
 		records = append(records, recs...)
 		return true // keep paging
 	})
 	if err != nil {
-		log.Fatalf("Error in scan: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in scan for %s", config.Service)
 	}
 	return records, err
 }

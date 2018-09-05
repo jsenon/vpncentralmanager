@@ -15,8 +15,10 @@
 package dynamo
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/jsenon/vpncentralmanager/config"
+	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,7 +32,10 @@ func ConnectDynamo() (*session.Session, error) {
 		Region:   aws.String("eu-central-1")},
 	)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Connect to Dynamo for %s", config.Service)
 	}
 	// fmt.Println("Session to DB")
 	return sess, err
@@ -67,10 +72,9 @@ func UpdateStatusDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dy
 
 	_, err := svc.UpdateItem(input)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error().Msgf("Update item error:  %s ", err)
 		return err
 	}
-	fmt.Println("Successfully updated")
 	return nil
 }
 
@@ -89,9 +93,9 @@ func UpdateipvpnDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dyn
 
 	_, err := svc.UpdateItem(input)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error().Msgf("Update item error:  %s ", err)
 		return err
 	}
-	fmt.Println("Successfully updated")
+	log.Info().Msg("Successfully updated")
 	return nil
 }
