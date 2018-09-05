@@ -100,7 +100,7 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	// Debug
 	log.Info().Msgf("Item: %s", item)
 	// POST To VPN Server
-	postclientconfig.PostClientConf(idclient)
+	postclientconfig.PostClientConf(ctx, idclient)
 
 	return &pb.AckWeb{Ack: true}, nil
 

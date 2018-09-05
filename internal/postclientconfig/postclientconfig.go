@@ -24,6 +24,7 @@ import (
 	"net"
 
 	"github.com/rs/zerolog/log"
+	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -73,7 +74,9 @@ func PostToAll() {
 }
 
 // PostClientConf send config to VPN Server
-func PostClientConf(idclient string) { // nolint: gocyclo
+func PostClientConf(ctx context.Context, idclient string) { // nolint: gocyclo
+	_, span := trace.StartSpan(ctx, "(*Server).PostClientConf")
+	defer span.End()
 
 	// Contact VPN Server GRPC
 	var conn *grpc.ClientConn
