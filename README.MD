@@ -1,7 +1,7 @@
+# VPN Central Manager
+
 [![CircleCI](https://circleci.com/gh/jsenon/vpncentralmanager.svg?style=svg)](https://circleci.com/gh/jsenon/vpncentralmanager)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jsenon/vpncentralmanager)](https://goreportcard.com/report/github.com/jsenon/vpncentralmanager)
-
-# VPN Central Manager
 
 ## Func
 
@@ -17,6 +17,10 @@ Have DynamoDB Server.
 ### Launch Development Env
 
 You can launch docker-compose stack for your local dev:
+
+- Jaeger
+- DynamoDB
+- Vpncentralmanager
 
 ```sh
 docker-compose up -d
@@ -111,6 +115,8 @@ Client Definition
 - [x] Rest for well-known
 - [x] Rest for healthz
 - [x] Opencensus
-- [ ] Opencensus exporter
-- [ ] opentracing
-- [x] prometheus
+- [x] Opencensus exporter
+- [x] Opentracing
+- [x] Prometheus
+
+- [ ] Refactor func too complex
