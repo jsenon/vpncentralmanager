@@ -1,6 +1,8 @@
 package jaegerexporter
 
 import (
+	"os"
+
 	"github.com/rs/zerolog/log"
 
 	"go.opencensus.io/exporter/jaeger"
@@ -11,8 +13,9 @@ import (
 func NewExporterCollector() {
 	// Register the Jaeger exporter to be able to retrieve
 	// the collected spans.
+	addressjaeger := os.Getenv("JAEGER_URL")
 	exporter, err := jaeger.NewExporter(jaeger.Options{
-		Endpoint:    "http://localhost:14268",
+		Endpoint:    addressjaeger,
 		ServiceName: "vpncentralmanager",
 	},
 	)

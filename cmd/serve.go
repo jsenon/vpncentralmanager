@@ -28,6 +28,7 @@ import (
 
 var url string
 var loglevel bool
+var jaegerurl string
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
@@ -48,8 +49,8 @@ var serveCmd = &cobra.Command{
 				log.Fatal().Msg("Failed to export loglevel debug")
 			}
 		}
-
 		log.Debug().Msg("Log level set to Debug")
+
 		err := os.Setenv("urldynamo", url)
 		if err != nil {
 			log.Fatal().
@@ -59,12 +60,19 @@ var serveCmd = &cobra.Command{
 		}
 		log.Info().Msg("Dynamo url: " + os.Getenv("urldynamo"))
 
+		err = os.Setenv("JAEGER_URL", jaegerurl)
+		log.Debug().Msgf("Jaeger URL set to: %s", jaegerurl)
+		if err != nil {
+			log.Fatal().Msg("Failed to export jaegger endpoint value")
+		}
+
 		Start()
 	},
 }
 
 func init() {
 	serveCmd.PersistentFlags().StringVar(&url, "url", "http://localhost:8000", "url:port for dynamoDB")
+	serveCmd.PersistentFlags().StringVar(&jaegerurl, "jaeger", "http://localhost:14268", "Set jaegger collector endpoint")
 	serveCmd.PersistentFlags().BoolVar(&loglevel, "debug", false, "Set log level to Debug")
 	rootCmd.AddCommand(serveCmd)
 }
