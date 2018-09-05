@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
+	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -49,6 +50,13 @@ type Item struct {
 
 // GetClientDemand store in db a demand from client
 func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb.AckWeb, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).GetClientDemand")
+	defer span.End()
+
+	span.Annotate([]trace.Attribute{
+		trace.Int64Attribute("len", int64(len(in.Hostname))+int64(len(in.Keypublic))),
+	}, "Data in")
+
 	log.Debug().Msg("In GetClientDemand")
 	log.Debug().Msgf("Debug: %s", in)
 	sess, err := dynamo.ConnectDynamo()

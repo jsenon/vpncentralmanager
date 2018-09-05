@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
+	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -56,6 +57,12 @@ type ItemClient struct {
 
 // GetAllConfig send all configuration
 func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb.AllConfigFileResp, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).GetAllConfig")
+	defer span.End()
+
+	span.Annotate([]trace.Attribute{
+		trace.Int64Attribute("len", int64(len(in.Type))+int64(len(in.Id))),
+	}, "Data in")
 	log.Debug().Msg("Info received in GetAll")
 	log.Debug().Msgf("Debug: %s", in)
 
