@@ -28,10 +28,12 @@ import (
 	ncc "github.com/jsenon/vpncentralmanager/internal/newclientconfig"
 	ncd "github.com/jsenon/vpncentralmanager/internal/newclientdemand"
 
+	"github.com/jsenon/vpncentralmanager/pkg/exporter/jaegerexporter"
 	"github.com/jsenon/vpncentralmanager/pkg/grpc/pb"
 
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 
 	"google.golang.org/grpc"
 )
@@ -42,6 +44,13 @@ const (
 
 // Serve launch command serve
 func Serve() {
+
+	// ctx := context.Background()
+	jaegerexporter.NewExporterCollector()
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+	// ctx, span := trace.StartSpan(ctx, "Serve")
+	// span.End()
+
 	log.Info().Msg("Dynamo url: " + os.Getenv("urldynamo"))
 
 	log.Info().Msg("Start GRPC Server")

@@ -53,10 +53,6 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	_, span := trace.StartSpan(ctx, "(*Server).GetClientDemand")
 	defer span.End()
 
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("len", int64(len(in.Hostname))+int64(len(in.Keypublic))),
-	}, "Data in")
-
 	log.Debug().Msg("In GetClientDemand")
 	log.Debug().Msgf("Debug: %s", in)
 	sess, err := dynamo.ConnectDynamo()

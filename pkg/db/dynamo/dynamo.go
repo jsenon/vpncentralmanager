@@ -28,9 +28,13 @@ import (
 // ConnectDynamo will create session to dynamodb
 func ConnectDynamo() (*session.Session, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Endpoint: aws.String(os.Getenv("urldynamo")),
-		Region:   aws.String("eu-central-1")},
+		Endpoint:   aws.String(os.Getenv("urldynamo")),
+		Region:     aws.String("eu-central-1"),
+		LogLevel:   aws.LogLevel(1),
+		MaxRetries: aws.Int(1),
+	},
 	)
+	log.Debug().Msgf("Session config:", sess)
 	if err != nil {
 		log.Fatal().
 			Err(err).

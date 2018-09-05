@@ -60,9 +60,6 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 	_, span := trace.StartSpan(ctx, "(*Server).GetAllConfig")
 	defer span.End()
 
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("len", int64(len(in.Type))+int64(len(in.Id))),
-	}, "Data in")
 	log.Debug().Msg("Info received in GetAll")
 	log.Debug().Msgf("Debug: %s", in)
 
@@ -70,11 +67,12 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 	log.Info().Msgf("Type config asked: %s", in.Type)
 
 	sess, err := dynamo.ConnectDynamo()
+	log.Debug().Msgf("Session Dynamo: ", sess)
 	if err != nil {
 		log.Fatal().
 			Err(err).
 			Str("service", config.Service).
-			Msgf("Can't connect to Dynamo Server for %s", config.Service)
+			Msgf("Can't initialize session to Dynamo Server for %s", config.Service)
 	}
 	svc := dynamodb.New(sess)
 
@@ -87,7 +85,11 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 
 		var serverarray []*pb.Item
 
-		_ = svc.ScanPages(&dynamodb.ScanInput{
+		span.Annotate([]trace.Attribute{
+			trace.StringAttribute("Type", "vpnserver"),
+		}, "Type")
+
+		err = svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNSERVER"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemServer{}
@@ -101,6 +103,15 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			records = append(records, recs...)
 			return true // keep paging
 		})
+		if err != nil {
+			span.Annotate([]trace.Attribute{
+				trace.StringAttribute("Debug", err.Error()),
+			}, "Error")
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		}
 		for _, res := range records {
 			server = &pb.Item{
 				Id:         res.Server,
@@ -120,7 +131,11 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 
 		var clientarray []*pb.Item
 
-		_ = svc.ScanPages(&dynamodb.ScanInput{
+		span.Annotate([]trace.Attribute{
+			trace.StringAttribute("Type", "client"),
+		}, "Type")
+
+		err = svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNCLIENT"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemClient{}
@@ -134,6 +149,12 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			records = append(records, recs...)
 			return true // keep paging
 		})
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		}
 		for _, res := range records {
 			client = &pb.Item{
 				Id:         res.Client,
