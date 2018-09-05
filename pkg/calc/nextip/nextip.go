@@ -14,10 +14,17 @@
 
 package nextip
 
-import "net"
+import (
+	"context"
+	"net"
+
+	"go.opencensus.io/trace"
+)
 
 // NextIP Increment IP
-func NextIP(stringip string) string {
+func NextIP(ctx context.Context, stringip string) string {
+	_, span := trace.StartSpan(ctx, "(*Server).NextIP")
+	defer span.End()
 	ip := net.ParseIP(stringip)
 	// make sure it's only 4 bytes
 	ip = ip.To4()

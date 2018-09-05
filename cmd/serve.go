@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/jsenon/vpncentralmanager/config"
 	s "github.com/jsenon/vpncentralmanager/pkg/grpc/server"
@@ -46,24 +47,24 @@ var serveCmd = &cobra.Command{
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
 			err := os.Setenv("LOGLEVEL", "debug")
 			if err != nil {
-				log.Fatal().Msg("Failed to export loglevel debug")
+				log.Error().Msgf("Error %s", err.Error())
+				runtime.Goexit()
 			}
 		}
 		log.Debug().Msg("Log level set to Debug")
 
 		err := os.Setenv("urldynamo", url)
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("Cannot start %s", config.Service)
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 		log.Info().Msg("Dynamo url: " + os.Getenv("urldynamo"))
 
 		err = os.Setenv("JAEGER_URL", jaegerurl)
 		log.Debug().Msgf("Jaeger URL set to: %s", jaegerurl)
 		if err != nil {
-			log.Fatal().Msg("Failed to export jaegger endpoint value")
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 
 		Start()

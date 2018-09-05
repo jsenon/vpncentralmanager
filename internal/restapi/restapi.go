@@ -3,9 +3,9 @@ package restapi
 import (
 	"encoding/json"
 	"net/http"
+	"runtime"
 	"strconv"
 
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/rs/zerolog/log"
 )
 
@@ -43,10 +43,8 @@ func WellKnownFingerHandler(w http.ResponseWriter, _ *http.Request) {
 		Endpoints:          ""}
 	data, err := json.Marshal(item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error Marshal for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	writeJSONResponse(w, http.StatusOK, data)
 }
@@ -55,10 +53,8 @@ func WellKnownFingerHandler(w http.ResponseWriter, _ *http.Request) {
 func Health(w http.ResponseWriter, _ *http.Request) {
 	data, err := json.Marshal(healthCheckResponse{Status: "UP"})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error Marshal for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Debug().Msgf("Debug Marshall health", data)
 
@@ -72,9 +68,7 @@ func writeJSONResponse(w http.ResponseWriter, status int, data []byte) {
 	w.WriteHeader(status)
 	_, err := w.Write(data)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in writeJSON rest server: %v for %s", err, config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 }

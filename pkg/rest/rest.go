@@ -16,11 +16,11 @@ package rest
 
 import (
 	"net/http"
+	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/internal/restapi"
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats/view"
@@ -40,10 +40,8 @@ func ServeRest() {
 		log.Info().Msg("Start debuging Z-Pages Server on http://127.0.0.1:7777")
 		err := http.ListenAndServe("127.0.0.1:7777", mux)
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("Cannot Listen port Z-Pages for %s", config.Service)
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 	}()
 	log.Info().Msg("Start Rest Server")
@@ -65,20 +63,15 @@ func ServeRest() {
 		Namespace: prefix,
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Create Prometheus exporter for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	view.RegisterExporter(promexporter)
 	mux.Handle("/metrics", promexporter)
 
 	err = http.ListenAndServe(port, mux)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Listen port for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
-
 }

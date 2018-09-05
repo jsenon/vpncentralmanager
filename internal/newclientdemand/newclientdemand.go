@@ -20,6 +20,7 @@ package newclientdemand
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -27,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/internal/postclientconfig"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/randomstring"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
@@ -57,16 +57,15 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	log.Debug().Msgf("Debug: %s", in)
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msg("Connected to Dynamo")
 	svc := dynamodb.New(sess)
 
 	//Prepare Item insertion
-	idclient := randomstring.RandStringBytesMaskImprSrc(16)
+	idclient := randomstring.RandStringBytesMaskImprSrc(ctx, 16)
 	item := Item{
 		Client:     idclient,
 		ClientName: in.Hostname,
@@ -75,10 +74,9 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	}
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -86,10 +84,9 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error Got error calling PutItem %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msg("Successfully added new client to VPNCLIENT table")
 

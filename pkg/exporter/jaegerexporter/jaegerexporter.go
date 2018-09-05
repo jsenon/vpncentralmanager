@@ -2,6 +2,7 @@ package jaegerexporter
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 
@@ -20,7 +21,8 @@ func NewExporterCollector() {
 	},
 	)
 	if err != nil {
-		log.Fatal().Msg("Error initialize jaeger exporter")
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	trace.RegisterExporter(exporter)
 }

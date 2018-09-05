@@ -15,8 +15,11 @@
 package randomstring
 
 import (
+	"context"
 	"math/rand"
 	"time"
+
+	"go.opencensus.io/trace"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -29,7 +32,10 @@ const (
 var src = rand.NewSource(time.Now().UnixNano())
 
 // RandStringBytesMaskImprSrc random a string
-func RandStringBytesMaskImprSrc(n int) string {
+func RandStringBytesMaskImprSrc(ctx context.Context, n int) string {
+	_, span := trace.StartSpan(ctx, "(*Server).RandStringBytesMaskImprSrc")
+	defer span.End()
+
 	b := make([]byte, n)
 	l := len(letterBytes)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
