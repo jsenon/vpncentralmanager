@@ -71,7 +71,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 	sess, err := dynamo.ConnectDynamo()
 	log.Debug().Msgf("Session Dynamo: ", sess)
 	if err != nil {
-		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
 		runtime.Goexit()
 	}
@@ -96,7 +96,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemServer{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+				span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 				log.Error().Msgf("Error %s", err.Error())
 				runtime.Goexit()
 			}
@@ -104,7 +104,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			return true // keep paging
 		})
 		if err != nil {
-			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 			log.Error().Msgf("Error %s", err.Error())
 			runtime.Goexit()
 		}
@@ -137,7 +137,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemClient{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+				span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 				log.Error().Msgf("Error %s", err.Error())
 				runtime.Goexit()
 			}
@@ -145,7 +145,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			return true // keep paging
 		})
 		if err != nil {
-			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 			log.Error().Msgf("Error %s", err.Error())
 			runtime.Goexit()
 		}
