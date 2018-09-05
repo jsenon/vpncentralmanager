@@ -63,9 +63,6 @@ type UpdateStatus struct {
 func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) {
 	_, span := trace.StartSpan(ctx, "(*Server).GetAck")
 	defer span.End()
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("len", int64(len(in.Serverid))+int64(len(in.Status))),
-	}, "Data in")
 
 	fmt.Println("In Ack")
 	fmt.Println("Debug: ", in)

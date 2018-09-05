@@ -21,10 +21,6 @@ func (s *Server) SendClientConfig(ctx context.Context, in *pb.ConfigFileResp) (*
 	_, span := trace.StartSpan(ctx, "(*Server).SendClientConfig")
 	defer span.End()
 
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("len", int64(len(in.Allowedrange))+int64(len(in.Keypublic))),
-	}, "Data in")
-
 	log.Info().Msg("Info received in fake VPN Server")
 	log.Info().Msgf("Debug: %s", in)
 	return &pb.Request{Request: true}, nil

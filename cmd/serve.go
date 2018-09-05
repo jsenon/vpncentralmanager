@@ -43,6 +43,10 @@ var serveCmd = &cobra.Command{
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		if loglevel {
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			err := os.Setenv("LOGLEVEL", "debug")
+			if err != nil {
+				log.Fatal().Msg("Failed to export loglevel debug")
+			}
 		}
 
 		log.Debug().Msg("Log level set to Debug")

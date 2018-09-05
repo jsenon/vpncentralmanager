@@ -24,7 +24,6 @@ import (
 	"net"
 
 	"github.com/rs/zerolog/log"
-	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -58,11 +57,6 @@ const maxipserver = "10.200.207.254"
 
 // GetConfig retrieve config from new node
 func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, error) {
-	_, span := trace.StartSpan(ctx, "(*Server).GetConfig")
-	defer span.End()
-	span.Annotate([]trace.Attribute{
-		trace.Int64Attribute("len", int64(len(in.Ippublic))+int64(len(in.Hostname))+int64(len(in.Keypublic))),
-	}, "Data in")
 
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {

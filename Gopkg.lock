@@ -2,6 +2,13 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "git.apache.org/thrift.git"
+  packages = ["lib/go/thrift"]
+  revision = "2566ecd5d9999f7ff70e6ac702243f0dfb24e7aa"
+  source = "github.com/apache/thrift"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -212,6 +219,8 @@
   name = "go.opencensus.io"
   packages = [
     ".",
+    "exporter/jaeger",
+    "exporter/jaeger/internal/gen-go/jaeger",
     "exporter/prometheus",
     "internal",
     "internal/tagencoding",
@@ -245,6 +254,12 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["semaphore"]
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a"
@@ -269,6 +284,12 @@
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/api"
+  packages = ["support/bundler"]
+  revision = "0ad5a633fea1d4b64bf5e6a01e30d1fc466038e5"
 
 [[projects]]
   branch = "master"
@@ -320,6 +341,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dd409979d57858eb3e5b731738fcb35952f775852a80fb09c5129c14a732ec72"
+  inputs-digest = "083ffcf5fe0d85aefd64050172eece9076a48d2f50b08e19bac07f8b16ea39fa"
   solver-name = "gps-cdcl"
   solver-version = 1
