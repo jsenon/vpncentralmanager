@@ -17,11 +17,11 @@ package server
 import (
 	"net"
 	"os"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/jsenon/vpncentralmanager/config"
 	ack "github.com/jsenon/vpncentralmanager/internal/ackconfig"
 	adv "github.com/jsenon/vpncentralmanager/internal/advertise"
 	gac "github.com/jsenon/vpncentralmanager/internal/getallconfig"
@@ -57,18 +57,14 @@ func Serve() {
 	lis, err := net.Listen("tcp", port)
 	log.Info().Msg("Listening GRPC on port:" + port)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Listen port for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	// Creates a new gRPC server
 	// s := grpc.NewServer()
 	if err = view.Register(ocgrpc.DefaultServerViews...); err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Register GRPC for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	s := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
 	reflection.Register(s)
@@ -90,9 +86,7 @@ func Serve() {
 
 	err = s.Serve(lis)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Listen port for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 }

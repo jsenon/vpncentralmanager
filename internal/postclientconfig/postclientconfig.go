@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"net"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -29,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/nextip"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
 
@@ -83,10 +83,9 @@ func PostClientConf(ctx context.Context, idclient string) { // nolint: gocyclo
 	log.Debug().Msg("Fake send to VPN Server")
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't connect to VPN Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	defer conn.Close() // nolint: errcheck
 	client := pb.NewSendClientConfigClient(conn)
@@ -94,36 +93,32 @@ func PostClientConf(ctx context.Context, idclient string) { // nolint: gocyclo
 	// Connection to DynamoDB
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	svc := dynamodb.New(sess)
 	out, err := dynamo.SearchDynamo(svc, "VPNCLIENT", idclient, "Client")
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't search on Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 
 	item := Item{}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error unmarshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 
 	// Calculate VPN Client IP
-	scan, err := ScanDynamo(svc, "VPNCLIENT")
+	scan, err := ScanDynamo(ctx, svc, "VPNCLIENT")
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in scan for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	n := net.ParseIP(minipclient)
 
@@ -134,17 +129,16 @@ func PostClientConf(ctx context.Context, idclient string) { // nolint: gocyclo
 	}
 	// Increment ip address
 	// TODO : How to manage if IP Address has been deleted
-	ippriv := nextip.NextIP(net.IP.String(n))
+	ippriv := nextip.NextIP(ctx, net.IP.String(n))
 	allowediprange := ippriv + "/32"
 	clientkeypub := item.PublicKey
 
 	// Send Configuration to vpn server
 	response, err := client.SendClientConfig(context.Background(), &pb.ConfigFileResp{Keypublic: clientkeypub, Allowedrange: allowediprange})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error when calling GRPC Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msgf("Response from server: %b", response.Request)
 
@@ -154,32 +148,31 @@ func PostClientConf(ctx context.Context, idclient string) { // nolint: gocyclo
 		Client: idclient,
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	update, err := dynamodbattribute.MarshalMap(UpdateIPVPN{
 		AddressVpn: ippriv,
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	err = dynamo.UpdateipvpnDynamo(svc, "VPNCLIENT", key, update)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Issue update status for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 
 }
 
 // ScanDynamo scan and Unmarshal all records
-func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
+func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]Item, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).ScanDynamo")
+	defer span.End()
 	var records []Item
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
@@ -187,19 +180,17 @@ func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 		records = append(records, recs...)
 		return true // keep paging
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in scan for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	return records, err
 }

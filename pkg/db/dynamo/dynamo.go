@@ -16,8 +16,8 @@ package dynamo
 
 import (
 	"os"
+	"runtime"
 
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -36,10 +36,8 @@ func ConnectDynamo() (*session.Session, error) {
 	)
 	log.Debug().Msgf("Session config:", sess)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Cannot Connect to Dynamo for %s", config.Service)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	// fmt.Println("Session to DB")
 	return sess, err
@@ -56,6 +54,8 @@ func SearchDynamo(svc *dynamodb.DynamoDB, table string, searchfield string, attr
 		},
 	})
 	if err != nil {
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 		return nil, err
 	}
 	return result, err
@@ -76,7 +76,8 @@ func UpdateStatusDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dy
 
 	_, err := svc.UpdateItem(input)
 	if err != nil {
-		log.Error().Msgf("Update item error:  %s ", err)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 		return err
 	}
 	return nil
@@ -97,7 +98,8 @@ func UpdateipvpnDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dyn
 
 	_, err := svc.UpdateItem(input)
 	if err != nil {
-		log.Error().Msgf("Update item error:  %s ", err)
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 		return err
 	}
 	log.Info().Msg("Successfully updated")

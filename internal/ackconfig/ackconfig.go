@@ -21,13 +21,13 @@ package ackconfig
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
 	"github.com/jsenon/vpncentralmanager/pkg/grpc/pb"
 )
@@ -68,26 +68,23 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 	fmt.Println("Debug: ", in)
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	svc := dynamodb.New(sess)
 	out, err := dynamo.SearchDynamo(svc, "VPNSERVER", in.Serverid, "Server")
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in search on Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	item := Item{}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error unmarshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msgf("Old Status: %s", item.Status)
 
@@ -96,42 +93,37 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 		Server: in.Serverid,
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	update, err := dynamodbattribute.MarshalMap(UpdateStatus{
 		Status: in.Status,
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	err = dynamo.UpdateStatusDynamo(svc, "VPNSERVER", key, update)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error update status on Dynamo for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 
 	// Check if correctly updated
 	out, err = dynamo.SearchDynamo(svc, "VPNSERVER", in.Serverid, "Server")
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in search on Dynamo for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error unmarshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msgf("New Status: %s", item.Status)
 	return &pb.AckNode{Ack: true}, nil

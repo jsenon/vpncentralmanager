@@ -22,13 +22,14 @@ import (
 	"bytes"
 	"context"
 	"net"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
+	"go.opencensus.io/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/nextip"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/randomstring"
 
@@ -57,25 +58,25 @@ const maxipserver = "10.200.207.254"
 
 // GetConfig retrieve config from new node
 func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).GetConfig")
+	defer span.End()
 
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't connect to Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	svc := dynamodb.New(sess)
 
 	log.Info().Msgf("Receive advertise from VPN Server: %s", in.Hostname)
 
 	// Check next available ip for new VPN Server
-	scan, err := ScanDynamo(svc, "VPNSERVER")
+	scan, err := ScanDynamo(ctx, svc, "VPNSERVER")
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in Scan on Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	n := net.ParseIP(minipserver)
 
@@ -90,12 +91,12 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 
 	// increment ip address
 	// TODO : How to manage if IP Address has been deleted
-	ippriv := nextip.NextIP(net.IP.String(n))
+	ippriv := nextip.NextIP(ctx, net.IP.String(n))
 
 	// Make Final test to check if IPVPN is not already take
 
 	//Prepare Item insertion
-	idserver := randomstring.RandStringBytesMaskImprSrc(16)
+	idserver := randomstring.RandStringBytesMaskImprSrc(ctx, 16)
 	item := Item{
 		Server:     idserver,
 		ServerName: in.Hostname,
@@ -106,10 +107,9 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	}
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in marshal for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -117,10 +117,9 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in put item for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	log.Info().Msg("Successfully added new server to VPNSERVER table")
 
@@ -132,7 +131,9 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 }
 
 // ScanDynamo scan and Unmarshal all records
-func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
+func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]Item, error) {
+	_, span := trace.StartSpan(ctx, "(*Server).ScanDynamo")
+	defer span.End()
 	var records []Item
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
@@ -140,19 +141,17 @@ func ScanDynamo(svc *dynamodb.DynamoDB, table string) ([]Item, error) {
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("Failed to unmarshal Dynamodb Scan Items for %s", config.Service)
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 		records = append(records, recs...)
 		return true // keep paging
 	})
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Error in scan for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	return records, err
 }

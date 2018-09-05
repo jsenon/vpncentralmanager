@@ -19,6 +19,7 @@ package getallconfig
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -26,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
 	"github.com/jsenon/vpncentralmanager/pkg/grpc/pb"
 )
@@ -71,10 +71,9 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 	sess, err := dynamo.ConnectDynamo()
 	log.Debug().Msgf("Session Dynamo: ", sess)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("service", config.Service).
-			Msgf("Can't initialize session to Dynamo Server for %s", config.Service)
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+		log.Error().Msgf("Error %s", err.Error())
+		runtime.Goexit()
 	}
 	svc := dynamodb.New(sess)
 
@@ -97,22 +96,17 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemServer{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				log.Fatal().
-					Err(err).
-					Str("service", config.Service).
-					Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
+				span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+				log.Error().Msgf("Error %s", err.Error())
+				runtime.Goexit()
 			}
 			records = append(records, recs...)
 			return true // keep paging
 		})
 		if err != nil {
-			span.Annotate([]trace.Attribute{
-				trace.StringAttribute("Debug", err.Error()),
-			}, "Error")
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("Can't connect to Dynamo Server for %s", config.Service)
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 		for _, res := range records {
 			server = &pb.Item{
@@ -143,19 +137,17 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemClient{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				log.Fatal().
-					Err(err).
-					Str("service", config.Service).
-					Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
+				span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+				log.Error().Msgf("Error %s", err.Error())
+				runtime.Goexit()
 			}
 			records = append(records, recs...)
 			return true // keep paging
 		})
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Str("service", config.Service).
-				Msgf("Can't connect to Dynamo Server for %s", config.Service)
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+			log.Error().Msgf("Error %s", err.Error())
+			runtime.Goexit()
 		}
 		for _, res := range records {
 			client = &pb.Item{
@@ -172,6 +164,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 
 	default:
 		log.Error().Msgf("Wrong type %s.", typeconf)
+		runtime.Goexit()
 	}
 	return &pb.AllConfigFileResp{Items: nil}, nil
 }
