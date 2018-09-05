@@ -21,7 +21,6 @@ package ackconfig
 import (
 	"context"
 	"fmt"
-	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -70,21 +69,21 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	svc := dynamodb.New(sess)
 	out, err := dynamo.SearchDynamo(svc, "VPNSERVER", in.Serverid, "Server")
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	item := Item{}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	log.Info().Msgf("Old Status: %s", item.Status)
 
@@ -95,7 +94,7 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	update, err := dynamodbattribute.MarshalMap(UpdateStatus{
 		Status: in.Status,
@@ -103,13 +102,13 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	err = dynamo.UpdateStatusDynamo(svc, "VPNSERVER", key, update)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 
 	// Check if correctly updated
@@ -117,13 +116,13 @@ func (s *Server) GetAck(ctx context.Context, in *pb.State) (*pb.AckNode, error) 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	err = dynamodbattribute.UnmarshalMap(out.Item, &item)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	log.Info().Msgf("New Status: %s", item.Status)
 	return &pb.AckNode{Ack: true}, nil

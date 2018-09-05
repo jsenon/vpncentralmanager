@@ -73,7 +73,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	svc := dynamodb.New(sess)
 
@@ -90,11 +90,11 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			trace.StringAttribute("Type", "vpnserver"),
 		}, "Type")
 
-		err := svc.ScanPages(&dynamodb.ScanInput{
+		err = svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNSERVER"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemServer{}
-			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
+			err = dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
 				span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 				log.Error().Msgf("Error %s", err.Error())
@@ -106,7 +106,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 		if err != nil {
 			span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 			log.Error().Msgf("Error %s", err.Error())
-			runtime.Goexit()
+			return nil, err
 		}
 		for _, res := range records {
 			server = &pb.Item{
@@ -131,11 +131,11 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			trace.StringAttribute("Type", "client"),
 		}, "Type")
 
-		err := svc.ScanPages(&dynamodb.ScanInput{
+		err = svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNCLIENT"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemClient{}
-			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
+			err = dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
 				span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 				log.Error().Msgf("Error %s", err.Error())
@@ -147,7 +147,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 		if err != nil {
 			span.SetStatus(trace.Status{Code: trace.StatusCodeAborted, Message: err.Error()})
 			log.Error().Msgf("Error %s", err.Error())
-			runtime.Goexit()
+			return nil, err
 		}
 		for _, res := range records {
 			client = &pb.Item{
@@ -164,7 +164,6 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 
 	default:
 		log.Error().Msgf("Wrong type %s.", typeconf)
-		runtime.Goexit()
+		return nil, err
 	}
-	return &pb.AllConfigFileResp{Items: nil}, nil
 }

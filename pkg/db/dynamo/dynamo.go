@@ -16,7 +16,6 @@ package dynamo
 
 import (
 	"os"
-	"runtime"
 
 	"github.com/rs/zerolog/log"
 
@@ -37,7 +36,7 @@ func ConnectDynamo() (*session.Session, error) {
 	log.Debug().Msgf("Session config:", sess)
 	if err != nil {
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	// fmt.Println("Session to DB")
 	return sess, err
@@ -55,7 +54,6 @@ func SearchDynamo(svc *dynamodb.DynamoDB, table string, searchfield string, attr
 	})
 	if err != nil {
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
 		return nil, err
 	}
 	return result, err
@@ -77,7 +75,6 @@ func UpdateStatusDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dy
 	_, err := svc.UpdateItem(input)
 	if err != nil {
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
 		return err
 	}
 	return nil
@@ -99,7 +96,6 @@ func UpdateipvpnDynamo(svc *dynamodb.DynamoDB, table string, key map[string]*dyn
 	_, err := svc.UpdateItem(input)
 	if err != nil {
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
 		return err
 	}
 	log.Info().Msg("Successfully updated")

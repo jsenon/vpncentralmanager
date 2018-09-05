@@ -190,7 +190,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	return records, err
 }
