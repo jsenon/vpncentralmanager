@@ -15,10 +15,11 @@
 package rest
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
+
+	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/internal/restapi"
 	"go.opencensus.io/zpages"
 )
@@ -29,14 +30,20 @@ const (
 
 // ServeRest start API Rest Server
 func ServeRest() {
-	fmt.Println("Start Rest z-Page Server")
+	log.Info().Msg("Start Rest z-Page Server")
 	go func() {
 		mux := http.DefaultServeMux
 		zpages.Handle(mux, "/")
-		log.Fatal(http.ListenAndServe("127.0.0.1:7777", mux))
+		err := http.ListenAndServe("127.0.0.1:7777", mux)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("Cannot Listen port Z-Pages for %s", config.Service)
+		}
 	}()
-	fmt.Println("Start Rest Server")
-	fmt.Println("Listening REST on port: ", port)
+	log.Info().Msg("Start Rest Server")
+	log.Info().Msg("Listening REST on port" + port)
 
 	// API Part
 	http.HandleFunc("/healthz", restapi.Health)
@@ -46,7 +53,10 @@ func ServeRest() {
 
 	err := http.ListenAndServe(port, nil)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Listen port for %s", config.Service)
 	}
 
 }

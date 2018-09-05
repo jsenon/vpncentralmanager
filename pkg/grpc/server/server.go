@@ -15,12 +15,13 @@
 package server
 
 import (
-	"fmt"
-	"log"
 	"net"
+	"os"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/jsenon/vpncentralmanager/config"
 	ack "github.com/jsenon/vpncentralmanager/internal/ackconfig"
 	adv "github.com/jsenon/vpncentralmanager/internal/advertise"
 	gac "github.com/jsenon/vpncentralmanager/internal/getallconfig"
@@ -41,16 +42,24 @@ const (
 
 // Serve launch command serve
 func Serve() {
-	fmt.Println("Start GRPC Server")
+	log.Info().Msg("Dynamo url: " + os.Getenv("urldynamo"))
+
+	log.Info().Msg("Start GRPC Server")
 	lis, err := net.Listen("tcp", port)
-	fmt.Println("Listening GRPC on port:", port)
+	log.Info().Msg("Listening GRPC on port:" + port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Listen port for %s", config.Service)
 	}
 	// Creates a new gRPC server
 	// s := grpc.NewServer()
 	if err = view.Register(ocgrpc.DefaultServerViews...); err != nil {
-		log.Fatalf("Error registering grpc: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Register GRPC for %s", config.Service)
 	}
 	s := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
 	reflection.Register(s)
@@ -72,6 +81,9 @@ func Serve() {
 
 	err = s.Serve(lis)
 	if err != nil {
-		log.Fatalf("Error listening grpc: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Cannot Listen port for %s", config.Service)
 	}
 }

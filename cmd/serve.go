@@ -15,16 +15,19 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
 	"os"
 
+	"github.com/jsenon/vpncentralmanager/config"
 	s "github.com/jsenon/vpncentralmanager/pkg/grpc/server"
 	"github.com/jsenon/vpncentralmanager/pkg/rest"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var url string
+var loglevel bool
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
@@ -34,19 +37,32 @@ var serveCmd = &cobra.Command{
            which manage config file generation on VPN Servers
            `,
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Logger = log.With().Str("Service", config.Service).Logger()
+		log.Logger = log.With().Str("Version", config.Version).Logger()
+
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		if loglevel {
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		}
+
+		log.Debug().Msg("Log level set to Debug")
 		err := os.Setenv("urldynamo", url)
 		if err != nil {
-			log.Fatalf("Error setenv: %v", err)
+			log.Fatal().
+				Err(err).
+				Str("service", config.Service).
+				Msgf("Cannot start %s", config.Service)
 		}
-		fmt.Println("Dynamo url", os.Getenv("urldynamo"))
+		log.Info().Msg("Dynamo url: " + os.Getenv("urldynamo"))
+
 		Start()
 	},
 }
 
 func init() {
 	serveCmd.PersistentFlags().StringVar(&url, "url", "http://localhost:8000", "url:port for dynamoDB")
+	serveCmd.PersistentFlags().BoolVar(&loglevel, "debug", false, "Set log level to Debug")
 	rootCmd.AddCommand(serveCmd)
-
 }
 
 // Start the server

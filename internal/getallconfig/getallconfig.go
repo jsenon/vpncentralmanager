@@ -19,11 +19,13 @@ package getallconfig
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
 	"github.com/jsenon/vpncentralmanager/pkg/grpc/pb"
 )
@@ -54,15 +56,18 @@ type ItemClient struct {
 
 // GetAllConfig send all configuration
 func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb.AllConfigFileResp, error) {
-	fmt.Println("Info received in GetAll")
-	fmt.Println("Debug: ", in)
+	log.Debug().Msg("Info received in GetAll")
+	log.Debug().Msgf("Debug: %s", in)
 
 	// Case if vpn or client config
-	fmt.Println("Type config asked:", in.Type)
+	log.Info().Msgf("Type config asked: %s", in.Type)
 
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		fmt.Println("failed to connect to dynaoDB:", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't connect to Dynamo Server for %s", config.Service)
 	}
 	svc := dynamodb.New(sess)
 
@@ -81,7 +86,10 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemServer{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				panic(fmt.Sprintf("failed to unmarshal Dynamodb Scan Items, %v", err))
+				log.Fatal().
+					Err(err).
+					Str("service", config.Service).
+					Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
 			}
 			records = append(records, recs...)
 			return true // keep paging
@@ -111,7 +119,10 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			recs := []ItemClient{}
 			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {
-				panic(fmt.Sprintf("failed to unmarshal Dynamodb Scan Items, %v", err))
+				log.Fatal().
+					Err(err).
+					Str("service", config.Service).
+					Msgf("failed to unmarshal Dynamodb Scan Items for %s", config.Service)
 			}
 			records = append(records, recs...)
 			return true // keep paging
@@ -130,7 +141,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 		return &pb.AllConfigFileResp{Items: clientarray}, nil
 
 	default:
-		fmt.Printf("Wrong type %s.", typeconf)
+		log.Error().Msgf("Wrong type %s.", typeconf)
 	}
 	return &pb.AllConfigFileResp{Items: nil}, nil
 }

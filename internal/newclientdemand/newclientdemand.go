@@ -20,13 +20,13 @@ package newclientdemand
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"os"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/jsenon/vpncentralmanager/config"
 	"github.com/jsenon/vpncentralmanager/internal/postclientconfig"
 	"github.com/jsenon/vpncentralmanager/pkg/calc/randomstring"
 	"github.com/jsenon/vpncentralmanager/pkg/db/dynamo"
@@ -49,13 +49,16 @@ type Item struct {
 
 // GetClientDemand store in db a demand from client
 func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb.AckWeb, error) {
-	fmt.Println("In GetClientDemand")
-	fmt.Println("Debug: ", in)
+	log.Debug().Msg("In GetClientDemand")
+	log.Debug().Msgf("Debug: %s", in)
 	sess, err := dynamo.ConnectDynamo()
 	if err != nil {
-		log.Fatalf("Error in connect: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Can't connect to Dynamo Server for %s", config.Service)
 	}
-	fmt.Println("Connected to dynamodb")
+	log.Info().Msg("Connected to Dynamo")
 	svc := dynamodb.New(sess)
 
 	//Prepare Item insertion
@@ -68,7 +71,10 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	}
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatalf("Error in marshall: %v", err)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error in marshal for %s", config.Service)
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -76,15 +82,15 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	}
 	_, err = svc.PutItem(input)
 	if err != nil {
-		fmt.Println("Got error calling PutItem:")
-		fmt.Println(err.Error())
-		os.Exit(1)
+		log.Fatal().
+			Err(err).
+			Str("service", config.Service).
+			Msgf("Error Got error calling PutItem %s", config.Service)
 	}
-	fmt.Println("Successfully added new client to VPNCLIENT table")
+	log.Info().Msg("Successfully added new client to VPNCLIENT table")
 
 	// Debug
-	fmt.Println("Item:", item)
-
+	log.Info().Msgf("Item: %s", item)
 	// POST To VPN Server
 	postclientconfig.PostClientConf(idclient)
 
