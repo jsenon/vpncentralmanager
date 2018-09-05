@@ -55,8 +55,10 @@ type ItemClient struct {
 	Status     string `json:"Status"`
 }
 
+// TODO: Refactor, too complex
+
 // GetAllConfig send all configuration
-func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb.AllConfigFileResp, error) {
+func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb.AllConfigFileResp, error) { // nolint: gocyclo
 	_, span := trace.StartSpan(ctx, "(*Server).GetAllConfig")
 	defer span.End()
 
@@ -89,7 +91,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			trace.StringAttribute("Type", "vpnserver"),
 		}, "Type")
 
-		err = svc.ScanPages(&dynamodb.ScanInput{
+		err := svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNSERVER"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemServer{}
@@ -135,7 +137,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 			trace.StringAttribute("Type", "client"),
 		}, "Type")
 
-		err = svc.ScanPages(&dynamodb.ScanInput{
+		err := svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNCLIENT"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
 			recs := []ItemClient{}
