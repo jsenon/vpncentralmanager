@@ -65,7 +65,7 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	svc := dynamodb.New(sess)
 
@@ -76,7 +76,7 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	n := net.ParseIP(minipserver)
 
@@ -109,7 +109,7 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -119,7 +119,7 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	log.Info().Msg("Successfully added new server to VPNSERVER table")
 
@@ -151,7 +151,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	return records, err
 }

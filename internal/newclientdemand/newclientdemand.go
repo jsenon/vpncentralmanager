@@ -20,7 +20,6 @@ package newclientdemand
 
 import (
 	"context"
-	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -59,7 +58,7 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	log.Info().Msg("Connected to Dynamo")
 	svc := dynamodb.New(sess)
@@ -76,7 +75,7 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -86,7 +85,7 @@ func (s *Server) GetClientDemand(ctx context.Context, in *pb.ConfigFileReq) (*pb
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		runtime.Goexit()
+		return nil, err
 	}
 	log.Info().Msg("Successfully added new client to VPNCLIENT table")
 
