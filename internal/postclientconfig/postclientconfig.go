@@ -143,7 +143,7 @@ func PostClientConf(idclient string) { // nolint: gocyclo
 			Str("service", config.Service).
 			Msgf("Error when calling GRPC Server for %s", config.Service)
 	}
-	log.Info().Msgf("Response from server: %s", response.Request)
+	log.Info().Msgf("Response from server: %b", response.Request)
 
 	// Update in DB with key idclient
 	// Change Status
