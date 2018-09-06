@@ -1,4 +1,4 @@
 *.db
+db/
 vpncentralmanager
-docker-compose.yml
 docker-compose.yml
