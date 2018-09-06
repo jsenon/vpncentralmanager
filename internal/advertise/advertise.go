@@ -135,6 +135,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	_, span := trace.StartSpan(ctx, "(*Server).ScanDynamo")
 	defer span.End()
 	var records []Item
+	log.Debug().Msg("I'm yoda !!")
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
 	}, func(page *dynamodb.ScanOutput, last bool) bool {
