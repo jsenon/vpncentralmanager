@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"net"
+	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -153,7 +154,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
-		return nil, err
+		runtime.Goexit()
 	}
 	return records, err
 }
