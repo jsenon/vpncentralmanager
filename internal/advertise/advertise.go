@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"context"
 	"net"
-	"runtime"
 
 	"github.com/rs/zerolog/log"
 	"go.opencensus.io/trace"
@@ -139,12 +138,13 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
 	}, func(page *dynamodb.ScanOutput, last bool) bool {
+		log.Debug().Msg("I'm your father !!")
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {
 			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 			log.Error().Msgf("Error %s", err.Error())
-			runtime.Goexit()
+			return false // stop paging
 		}
 		records = append(records, recs...)
 		return true // keep paging
