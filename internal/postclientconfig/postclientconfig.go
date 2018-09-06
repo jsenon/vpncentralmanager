@@ -177,6 +177,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
 	}, func(page *dynamodb.ScanOutput, last bool) bool {
+		log.Debug().Msgf("Dump client Items: ", page.Items)
 		recs := []Item{}
 		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 		if err != nil {

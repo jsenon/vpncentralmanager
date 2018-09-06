@@ -93,6 +93,7 @@ func (s *Server) GetAllConfig(ctx context.Context, in *pb.AllConfigFileReq) (*pb
 		err = svc.ScanPages(&dynamodb.ScanInput{
 			TableName: aws.String("VPNSERVER"),
 		}, func(page *dynamodb.ScanOutput, last bool) bool {
+			log.Debug().Msgf("Dump vpnserver Items: ", page.Items)
 			recs := []ItemServer{}
 			err = dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
 			if err != nil {

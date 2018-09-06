@@ -7,10 +7,10 @@ services:
      - "50051:50051"
      - "7777:7777"
     environment:
-    - AWS_ACCESS_KEY_ID=fakeMyKeyId
-    - AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey
+    - AWS_ACCESS_KEY_ID=AKIAJBQJSESQNOCXX2XQ
+    - AWS_SECRET_ACCESS_KEY=ZdQ6e9ZZJmreO5u8JfnlnGJnwmud6/2ZkERWCzkZ
     - AWS_DEFAULT_REGION=eu-central-1
-    entrypoint: "./vpncentralmanager serve --url http://dynamoDB:8000 --jaeger http://jaeger:14268"
+    entrypoint: "./vpncentralmanager serve --url http://dynamodb.eu-central-1.amazonaws.com --jaeger http://jaeger:14268 --debug"
   dynamoDB:
     image: "amazon/dynamodb-local"
     volumes:

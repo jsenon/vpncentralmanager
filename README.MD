@@ -10,7 +10,7 @@
 - Receive Ack from VPN Server -> Store in DB (Available to client config)
 - Retrieve all Configuration for client or vpn server
 
-To be used with vpn slave controller https://github.com/visheyra/vpnslavecontroller
+To be used with vpn slave controller [https://github.com/visheyra/vpnslavecontroller](https://github.com/visheyra/vpnslavecontroller)
 
 ### Prerequisite
 
