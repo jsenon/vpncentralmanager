@@ -42,8 +42,8 @@ type Server struct {
 	conf []*pb.NodeConf //nolint: megacheck, structcheck
 }
 
-// Item document to store in db
-type Item struct {
+// ItemServer document to store in db
+type ItemServer struct {
 	Server     string `json:"Server"`
 	ServerName string `json:"ServerName"`
 	AddressVpn string `json:"AddressVpn"`
@@ -93,11 +93,13 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 	// TODO : How to manage if IP Address has been deleted
 	ippriv := nextip.NextIP(ctx, net.IP.String(n))
 
+	// ippriv := "127.0.0.1"
+
 	// Make Final test to check if IPVPN is not already take
 
 	//Prepare Item insertion
 	idserver := randomstring.RandStringBytesMaskImprSrc(ctx, 16)
-	item := Item{
+	item := ItemServer{
 		Server:     idserver,
 		ServerName: in.Hostname,
 		AddressVpn: ippriv,
@@ -131,27 +133,26 @@ func (s *Server) GetConfig(ctx context.Context, in *pb.NodeConf) (*pb.RespNode, 
 }
 
 // ScanDynamo scan and Unmarshal all records
-func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]Item, error) {
+func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]ItemServer, error) {
 	_, span := trace.StartSpan(ctx, "(*Server).ScanDynamo")
 	defer span.End()
-	var records []Item
+	var records []ItemServer
 	log.Debug().Msg("I'm yoda !!")
 	err := svc.ScanPages(&dynamodb.ScanInput{
 		TableName: aws.String(table),
 	}, func(page *dynamodb.ScanOutput, last bool) bool {
 		log.Debug().Msg("I'm your father !!")
-		log.Debug().Msgf("Dump Items: ", page.Items)
-		recs := []Item{}
-		err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
-		if err != nil {
-			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
-			log.Error().Msgf("Error %s", err.Error())
+		log.Debug().Msgf("Dump vpnserver Items: ", page.Items)
+		recserv := []ItemServer{}
+		err2 := dynamodbattribute.UnmarshalListOfMaps(page.Items, &recserv)
+		if err2 != nil {
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err2.Error()})
+			log.Error().Msgf("Error %s", err2.Error())
 			runtime.Goexit()
 		}
-		records = append(records, recs...)
+		records = append(records, recserv...)
 		return true // keep paging
 	})
-	log.Debug().Msgf("Dump ScanPages: %s", err.Error())
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
