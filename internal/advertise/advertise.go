@@ -148,6 +148,7 @@ func ScanDynamo(ctx context.Context, svc *dynamodb.DynamoDB, table string) ([]It
 		records = append(records, recs...)
 		return true // keep paging
 	})
+	log.Debug().Msgf("Dump ScanPages: %s", err.Error())
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		log.Error().Msgf("Error %s", err.Error())
