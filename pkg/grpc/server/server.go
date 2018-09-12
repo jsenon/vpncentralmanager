@@ -36,6 +36,7 @@ import (
 	"go.opencensus.io/trace"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/channelz/service"
 )
 
 const (
@@ -67,6 +68,8 @@ func Serve() {
 		runtime.Goexit()
 	}
 	s := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
+	service.RegisterChannelzServiceToServer(s)
+
 	reflection.Register(s)
 
 	// Server to register new VPN Server

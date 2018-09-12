@@ -72,7 +72,8 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/timestamp"
+    "ptypes/timestamp",
+    "ptypes/wrappers"
   ]
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
@@ -304,6 +305,8 @@
     "balancer",
     "balancer/base",
     "balancer/roundrobin",
+    "channelz/grpc_channelz_v1",
+    "channelz/service",
     "codes",
     "connectivity",
     "credentials",
@@ -341,6 +344,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "083ffcf5fe0d85aefd64050172eece9076a48d2f50b08e19bac07f8b16ea39fa"
+  inputs-digest = "bd03e380dfa0e5bfdb74a0955dc73e6fe6456a72e64a2d17d6f45c33cbf9f9a1"
   solver-name = "gps-cdcl"
   solver-version = 1
