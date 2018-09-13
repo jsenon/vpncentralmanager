@@ -18,10 +18,10 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 
 	"github.com/jsenon/vpncentralmanager/internal/restapi"
+	oprometheus "github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
@@ -55,13 +55,16 @@ func ServeRest() {
 	mux.HandleFunc("/.well-known", restapi.WellKnownFingerHandler)
 
 	// Metrics REST on /restmetrics
-	mux.Handle("/restmetrics", promhttp.Handler())
+	// mux.Handle("/restmetrics", promhttp.Handler())
 
 	// Prometheus Forwarder on /metrics
 	prefix := "vpncentralmanager"
-	promexporter, err := prometheus.NewExporter(prometheus.Options{
-		Namespace: prefix,
-	})
+
+	promexporter, err := prometheus.NewExporter(prometheus.Options{Namespace: prefix, Registry: oprometheus.DefaultRegisterer.(*oprometheus.Registry)})
+
+	// promexporter, err := prometheus.NewExporter(prometheus.Options{
+	// 	Namespace: prefix,
+	// })
 	if err != nil {
 		log.Error().Msgf("Error %s", err.Error())
 		runtime.Goexit()
